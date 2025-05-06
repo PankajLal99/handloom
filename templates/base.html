@@ -87,15 +87,17 @@
                                         <button type="submit" class="dropdown-item">Logout</button>
                                     </form>
                                 </li>
+                            </ul>
                             {% else %}
+                            <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
                                     <form method="post" action="{% url 'logout' %}" class="d-inline">
                                         {% csrf_token %}
                                         <button type="submit" class="dropdown-item">Logout</button>
                                     </form>
                                 </li>
-                            {% endif %}
                             </ul>
+                            {% endif %}
                         </li>
                     {% else %}
                         <li class="nav-item">
