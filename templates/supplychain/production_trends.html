@@ -1,0 +1,229 @@
+{% extends 'supplychain/base_analytics.html' %}
+{% load static %}
+
+{% block title %}Production Trends - Handloom Supply Chain{% endblock %}
+
+{% block page_title %}Production Trends{% endblock %}
+
+{% block analytics_content %}
+<!-- Production Chart -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Daily Production Trends</h6>
+    </div>
+    <div class="card-body">
+        <canvas id="productionChart"></canvas>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Production</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalProduction">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-ruler fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Average Daily Production</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgProduction">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Active Looms</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeLooms">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-cogs fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Active Weavers</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeWeavers">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Production Details Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Daily Production Details</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="productionTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Total Production (meters)</th>
+                        <th>Active Looms</th>
+                        <th>Active Weavers</th>
+                        <th>Thread Used (kg)</th>
+                        <th>Avg. Production/Loom</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day in daily_production %}
+                    <tr>
+                        <td>{{ day.date|date:"M d, Y" }}</td>
+                        <td>{{ day.total_meters|floatformat:2 }}</td>
+                        <td>{{ day.active_looms }}</td>
+                        <td>{{ day.active_weavers }}</td>
+                        <td>{{ day.thread_used|floatformat:2 }}</td>
+                        <td>{{ day.avg_production|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable
+    $('#productionTable').DataTable({
+        order: [[0, 'desc']], // Sort by date by default
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]]
+    });
+
+    // Function to create production chart
+    function createProductionChart(data) {
+        const ctx = document.getElementById('productionChart').getContext('2d');
+        return new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.dates,
+                datasets: [{
+                    label: 'Daily Production',
+                    data: data.production,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Daily Production Trends'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Meters Produced'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Function to update summary cards
+    function updateSummaryCards(data) {
+        const totalProduction = data.production.reduce((a, b) => a + b, 0);
+        const avgProduction = totalProduction / data.production.length;
+        const activeLooms = Math.max(...data.active_looms);
+        const activeWeavers = Math.max(...data.active_weavers);
+
+        document.getElementById('totalProduction').textContent = totalProduction.toFixed(2);
+        document.getElementById('avgProduction').textContent = avgProduction.toFixed(2);
+        document.getElementById('activeLooms').textContent = activeLooms;
+        document.getElementById('activeWeavers').textContent = activeWeavers;
+    }
+
+    // Fetch initial data
+    $.ajax({
+        url: '{% url "supplychain:production_trends" %}',
+        data: { days: 30 },
+        success: function(data) {
+            // Create chart with the fetched data
+            const productionChart = createProductionChart(data);
+
+            // Update summary cards
+            updateSummaryCards(data);
+
+            // Store chart instance for later updates
+            window.productionChart = productionChart;
+        },
+        error: function(xhr, status, error) {
+            console.error('Error fetching production trends data:', error);
+        }
+    });
+
+    // Update chart periodically
+    setInterval(function() {
+        $.ajax({
+            url: '{% url "supplychain:production_trends" %}',
+            data: { days: 30 },
+            success: function(data) {
+                if (window.productionChart) {
+                    window.productionChart.data.labels = data.dates;
+                    window.productionChart.data.datasets[0].data = data.production;
+                    window.productionChart.update();
+                    updateSummaryCards(data);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error updating production trends data:', error);
+            }
+        });
+    }, 300000); // Update every 5 minutes
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,217 @@
+{% extends 'supplychain/base_analytics.html' %}
+{% load static %}
+
+{% block title %}Top Productive Looms - Handloom Supply Chain{% endblock %}
+
+{% block page_title %}Top Productive Looms{% endblock %}
+
+{% block analytics_content %}
+<!-- Production Chart -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Top 10 Looms by Production</h6>
+    </div>
+    <div class="card-body">
+        <canvas id="productionChart"></canvas>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Production</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalProduction">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-ruler fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Average Production</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgProduction">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Active Looms</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeLooms">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-cogs fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Top Loom Production</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="topLoomProduction">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-trophy fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Looms Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Top Looms Details</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="topLoomsTable">
+                <thead>
+                    <tr>
+                        <th>Loom ID</th>
+                        <th>Type</th>
+                        <th>Assigned Weaver</th>
+                        <th>Total Production (meters)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loom in top_looms %}
+                    <tr>
+                        <td>{{ loom.loom_id }}</td>
+                        <td>{{ loom.loom_type }}</td>
+                        <td>{{ loom.assigned_weaver.name|default:"Not Assigned" }}</td>
+                        <td>{{ loom.total_meters|default:"0"|floatformat:2 }}</td>
+                        <td>
+                            <span class="badge badge-{{ loom.status|yesno:'success,danger' }}">
+                                {{ loom.status|yesno:'Active,Inactive' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable
+    $('#topLoomsTable').DataTable({
+        order: [[3, 'desc']], // Sort by total production by default
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]]
+    });
+
+    // Function to create production chart
+    function createProductionChart(data) {
+        const ctx = document.getElementById('productionChart').getContext('2d');
+        return new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Top 10 Looms by Production'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Total Production (meters)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Function to update summary cards
+    function updateSummaryCards(data) {
+        const totalProduction = data.datasets[0].data.reduce((a, b) => a + b, 0);
+        const avgProduction = totalProduction / data.datasets[0].data.length;
+        const topProduction = Math.max(...data.datasets[0].data);
+
+        document.getElementById('totalProduction').textContent = totalProduction.toFixed(2);
+        document.getElementById('avgProduction').textContent = avgProduction.toFixed(2);
+        document.getElementById('activeLooms').textContent = data.datasets[0].data.length;
+        document.getElementById('topLoomProduction').textContent = topProduction.toFixed(2);
+    }
+
+    // Fetch initial data
+    $.ajax({
+        url: '{% url "supplychain:top_looms" %}',
+        success: function(data) {
+            // Create chart with the fetched data
+            const productionChart = createProductionChart(data);
+
+            // Update summary cards
+            updateSummaryCards(data);
+
+            // Store chart instance for later updates
+            window.productionChart = productionChart;
+        },
+        error: function(xhr, status, error) {
+            console.error('Error fetching top looms data:', error);
+        }
+    });
+
+    // Update chart periodically
+    setInterval(function() {
+        $.ajax({
+            url: '{% url "supplychain:top_looms" %}',
+            success: function(data) {
+                if (window.productionChart) {
+                    window.productionChart.data = data;
+                    window.productionChart.update();
+                    updateSummaryCards(data);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error updating top looms data:', error);
+            }
+        });
+    }, 300000); // Update every 5 minutes
+});
+</script>
+{% endblock %} 

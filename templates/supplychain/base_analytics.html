@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+{{ block.super }}
+<!-- Date Range Picker -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+<!-- DataTables CSS -->
+<link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="date_range" class="form-label">Date Range</label>
+                    <input type="text" class="form-control" id="date_range" name="date_range">
+                </div>
+                <div class="col-md-3">
+                    <label for="weaver" class="form-label">Weaver</label>
+                    <select class="form-select" id="weaver" name="weaver">
+                        <option value="">All Weavers</option>
+                        {% for weaver in weavers %}
+                        <option value="{{ weaver.id }}" {% if selected_weaver == weaver.id %}selected{% endif %}>
+                            {{ weaver.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="loom" class="form-label">Loom</label>
+                    <select class="form-select" id="loom" name="loom">
+                        <option value="">All Looms</option>
+                        {% for loom in looms %}
+                        <option value="{{ loom.id }}" {% if selected_loom == loom.id %}selected{% endif %}>
+                            {{ loom.loom_id }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="btn-group w-100">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> Apply Filters
+                        </button>
+                        <a href="{% url 'supplychain:'|add:request.resolver_match.url_name %}" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Analytics Content -->
+    {% block analytics_content %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- Moment.js -->
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+<!-- Date Range Picker -->
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- DataTables JavaScript -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Initialize date range picker
+    $('#date_range').daterangepicker({
+        startDate: moment().subtract(30, 'days'),
+        endDate: moment(),
+        ranges: {
+           'Today': [moment(), moment()],
+           'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+           'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+           'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+           'This Month': [moment().startOf('month'), moment().endOf('month')],
+           'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+        }
+    });
+
+    // Initialize select2 for dropdowns if it exists
+    if ($.fn.select2) {
+        $('#weaver, #loom').select2({
+            theme: 'bootstrap-5'
+        });
+    }
+});
+</script>
+{% endblock %} 

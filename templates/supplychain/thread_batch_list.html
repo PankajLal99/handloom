@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Thread Batches - Handloom Supply Chain{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">Thread Batches</h1>
+        <a href="{% url 'supplychain:thread_batch_create' %}" class="btn btn-primary">
+            Add New Batch
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Batch Code</th>
+                        <th>Date</th>
+                        <th>Color</th>
+                        <th>Quantity (kg)</th>
+                        <th>Created By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batch in thread_batches %}
+                    <tr>
+                        <td>{{ batch.batch_code }}</td>
+                        <td>{{ batch.date }}</td>
+                        <td>{{ batch.color }}</td>
+                        <td>{{ batch.quantity_kg }}</td>
+                        <td>{{ batch.created_by.username }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No thread batches found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

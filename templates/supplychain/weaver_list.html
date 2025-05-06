@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Weavers - Handloom Supply Chain{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Weavers</h2>
+        <a href="{% url 'supplychain:weaver_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Weaver
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Experience (Years)</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for weaver in weavers %}
+                        <tr>
+                            <td>{{ weaver.name }}</td>
+                            <td>{{ weaver.contact_number }}</td>
+                            <td>{{ weaver.experience_years }}</td>
+                            <td>
+                                <span class="badge {% if weaver.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ weaver.is_active|yesno:"Active,Inactive" }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'supplychain:weaver_detail' weaver.id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'supplychain:weaver_edit' weaver.id %}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'supplychain:weaver_delete' weaver.id %}" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No weavers found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %} 

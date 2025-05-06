@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Loom Assignments - Handloom Supply Chain{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Loom Assignments</h1>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Loom ID</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Assigned Weaver</th>
+                    <th>Last Maintenance</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loom in looms %}
+                <tr>
+                    <td>{{ loom.loom_id }}</td>
+                    <td>{{ loom.get_loom_type_display }}</td>
+                    <td>
+                        <span class="badge {% if loom.status == 'active' %}bg-success{% elif loom.status == 'maintenance' %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ loom.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if loom.assigned_weaver %}
+                            {{ loom.assigned_weaver.name }}
+                        {% else %}
+                            <span class="text-muted">Not assigned</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ loom.last_maintenance_date|default:"Never" }}</td>
+                    <td>
+                        <a href="{% url 'supplychain:loom_assignment_edit' loom.loom_id %}" class="btn btn-sm btn-primary">
+                            Edit Assignment
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No looms found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %} 

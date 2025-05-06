@@ -1,0 +1,55 @@
+{% extends 'supplychain/base_analytics.html' %}
+
+{% block title %}Inventory Status - Handloom Supply Chain{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Inventory Status</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Material Type</th>
+                                <th>Name</th>
+                                <th>Quantity</th>
+                                <th>Unit</th>
+                                <th>Status</th>
+                                <th>Value</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in inventory_items %}
+                            <tr>
+                                <td>{{ item.get_material_type_display }}</td>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.unit }}</td>
+                                <td>
+                                    {% with status=item.get_status %}
+                                    <span class="badge {% if status == 'Low' %}bg-danger{% elif status == 'Medium' %}bg-warning{% else %}bg-success{% endif %}">
+                                        {{ status }}
+                                    </span>
+                                    {% endwith %}
+                                </td>
+                                <td>₹{{ item.value }}</td>
+                                <td>{{ item.last_updated|date:"M d, Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No inventory items found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

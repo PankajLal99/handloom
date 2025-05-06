@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tracking Analytics - Handloom Supply Chain{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Tracking Analytics</h1>
+    
+    <!-- Time Range Selector -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <label for="days" class="form-label">Time Range:</label>
+                    <select name="days" id="days" class="form-select" onchange="this.form.submit()">
+                        <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 days</option>
+                        <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
+                        <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 days</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Page Views Chart -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Daily Page Views</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="pageViewsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Activity Chart -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">User Activity</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="userActivityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Top Pages -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Top Pages</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Page</th>
+                                    <th>Views</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for view in page_views %}
+                                <tr>
+                                    <td>{{ view.path }}</td>
+                                    <td>{{ view.view_count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Events -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Scroll Events</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Page</th>
+                                    <th>Avg Scroll</th>
+                                    <th>Events</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in scroll_events %}
+                                <tr>
+                                    <td>{{ event.page_view__path }}</td>
+                                    <td>{{ event.avg_scroll|floatformat:0 }}px</td>
+                                    <td>{{ event.event_count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Page Views Chart
+    const pageViewsCtx = document.getElementById('pageViewsChart').getContext('2d');
+    new Chart(pageViewsCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for view in daily_views %}'{{ view.day }}',{% endfor %}],
+            datasets: [{
+                label: 'Page Views',
+                data: [{% for view in daily_views %}{{ view.count }},{% endfor %}],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // User Activity Chart
+    const userActivityCtx = document.getElementById('userActivityChart').getContext('2d');
+    new Chart(userActivityCtx, {
+        type: 'pie',
+        data: {
+            labels: [{% for activity in user_activity %}'{{ activity.activity_type }}',{% endfor %}],
+            datasets: [{
+                data: [{% for activity in user_activity %}{{ activity.count }},{% endfor %}],
+                backgroundColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 205, 86)',
+                    'rgb(75, 192, 192)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+});
+</script>
+{% endblock %} 

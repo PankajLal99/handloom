@@ -1,0 +1,258 @@
+{% extends 'supplychain/base_analytics.html' %}
+{% load static %}
+
+{% block title %}Thread Utilization - Handloom Supply Chain{% endblock %}
+
+{% block page_title %}Thread Utilization{% endblock %}
+
+{% block analytics_content %}
+<!-- Utilization Chart -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Thread Utilization by Batch</h6>
+    </div>
+    <div class="card-body">
+        <canvas id="utilizationChart"></canvas>
+    </div>
+</div>
+
+<!-- Efficiency Chart -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Thread Efficiency by Batch</h6>
+    </div>
+    <div class="card-body">
+        <canvas id="efficiencyChart"></canvas>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Batches</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalBatches">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Total Thread (kg)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalThread">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-weight fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Average Efficiency</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgEfficiency">0%</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Avg. Meters per kg</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgMetersPerKg">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-ruler fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Thread Batches Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Thread Batch Details</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="threadBatchTable">
+                <thead>
+                    <tr>
+                        <th>Batch Code</th>
+                        <th>Color</th>
+                        <th>Quantity (kg)</th>
+                        <th>Meters Produced</th>
+                        <th>Efficiency (%)</th>
+                        <th>Meters/kg</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batch in thread_batches %}
+                    <tr>
+                        <td>{{ batch.batch_code }}</td>
+                        <td>{{ batch.color }}</td>
+                        <td>{{ batch.quantity_kg|floatformat:2 }}</td>
+                        <td>{{ batch.get_utilization|floatformat:2 }}</td>
+                        <td>{{ batch.get_efficiency|floatformat:1 }}%</td>
+                        <td>{{ batch.get_meters_per_kg|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable
+    $('#threadBatchTable').DataTable({
+        order: [[3, 'desc']], // Sort by meters produced by default
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]]
+    });
+
+    // Function to create utilization chart
+    function createUtilizationChart(data) {
+        const ctx = document.getElementById('utilizationChart').getContext('2d');
+        return new Chart(ctx, {
+            type: 'bar',
+            data: data.utilization_chart,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Thread Utilization by Batch'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Meters Produced'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Function to create efficiency chart
+    function createEfficiencyChart(data) {
+        const ctx = document.getElementById('efficiencyChart').getContext('2d');
+        return new Chart(ctx, {
+            type: 'bar',
+            data: data.efficiency_chart,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Thread Efficiency by Batch'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Efficiency (%)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Function to update summary cards
+    function updateSummaryCards(data) {
+        document.getElementById('totalBatches').textContent = data.summary.total_batches;
+        document.getElementById('totalThread').textContent = data.summary.total_thread.toFixed(2);
+        document.getElementById('avgEfficiency').textContent = data.summary.avg_efficiency.toFixed(1) + '%';
+        document.getElementById('avgMetersPerKg').textContent = data.summary.avg_meters_per_kg.toFixed(2);
+    }
+
+    // Fetch initial data
+    $.ajax({
+        url: '{% url "supplychain:thread_utilization" %}',
+        success: function(data) {
+            // Create charts with the fetched data
+            const utilizationChart = createUtilizationChart(data);
+            const efficiencyChart = createEfficiencyChart(data);
+
+            // Update summary cards
+            updateSummaryCards(data);
+
+            // Store chart instances for later updates
+            window.utilizationChart = utilizationChart;
+            window.efficiencyChart = efficiencyChart;
+        },
+        error: function(xhr, status, error) {
+            console.error('Error fetching thread utilization data:', error);
+        }
+    });
+
+    // Update charts periodically
+    setInterval(function() {
+        $.ajax({
+            url: '{% url "supplychain:thread_utilization" %}',
+            success: function(data) {
+                if (window.utilizationChart) {
+                    window.utilizationChart.data = data.utilization_chart;
+                    window.utilizationChart.update();
+                }
+                if (window.efficiencyChart) {
+                    window.efficiencyChart.data = data.efficiency_chart;
+                    window.efficiencyChart.update();
+                }
+                updateSummaryCards(data);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error updating thread utilization data:', error);
+            }
+        });
+    }, 300000); // Update every 5 minutes
+});
+</script>
+{% endblock %} 

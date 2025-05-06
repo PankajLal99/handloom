@@ -1,0 +1,1 @@
+from handloom.wsgi import application

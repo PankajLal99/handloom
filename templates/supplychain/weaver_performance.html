@@ -1,0 +1,187 @@
+{% extends 'supplychain/base_analytics.html' %}
+{% load static %}
+
+{% block title %}Weaver Performance - Handloom Supply Chain{% endblock %}
+
+{% block page_title %}Weaver Performance{% endblock %}
+
+{% block analytics_content %}
+<!-- Performance Chart -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Weaver Performance Trends</h6>
+    </div>
+    <div class="card-body">
+        <canvas id="weaverPerformanceChart"></canvas>
+    </div>
+</div>
+
+<!-- Efficiency Chart -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Weaver Efficiency</h6>
+    </div>
+    <div class="card-body">
+        <canvas id="weaverEfficiencyChart"></canvas>
+    </div>
+</div>
+
+<!-- Performance Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Weaver Performance Details</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="weaverPerformanceTable">
+                <thead>
+                    <tr>
+                        <th>Weaver</th>
+                        <th>Skill Level</th>
+                        <th>Total Production (m)</th>
+                        <th>Efficiency (%)</th>
+                        <th>Avg. Daily Production</th>
+                        <th>Active Days</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for weaver in weavers %}
+                    <tr>
+                        <td>{{ weaver.name }}</td>
+                        <td>{{ weaver.get_skill_level_display }}</td>
+                        <td>{{ weaver.total_production|default:"0"|floatformat:2 }}</td>
+                        <td>{{ weaver.efficiency|default:"0"|floatformat:1 }}%</td>
+                        <td>{{ weaver.avg_daily_production|default:"0"|floatformat:2 }}</td>
+                        <td>{{ weaver.active_days|default:"0" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable
+    $('#weaverPerformanceTable').DataTable({
+        order: [[2, 'desc']], // Sort by total production by default
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]]
+    });
+
+    // Function to create performance chart
+    function createPerformanceChart(data) {
+        const ctx = document.getElementById('weaverPerformanceChart').getContext('2d');
+        return new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: data.datasets
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Weaver Performance (Last 30 Days)'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Meters Produced'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Function to create efficiency chart
+    function createEfficiencyChart(data) {
+        const ctx = document.getElementById('weaverEfficiencyChart').getContext('2d');
+        return new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.weavers,
+                datasets: [{
+                    label: 'Efficiency (%)',
+                    data: data.efficiency,
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                    borderColor: 'rgb(75, 192, 192)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Weaver Efficiency'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Efficiency (%)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Fetch initial data
+    $.ajax({
+        url: '{% url "supplychain:weaver_performance" %}',
+        data: { days: 30 },
+        success: function(data) {
+            // Create charts with the fetched data
+            const performanceChart = createPerformanceChart(data);
+            const efficiencyChart = createEfficiencyChart(data);
+
+            // Store chart instances for later updates
+            window.performanceChart = performanceChart;
+            window.efficiencyChart = efficiencyChart;
+        },
+        error: function(xhr, status, error) {
+            console.error('Error fetching weaver performance data:', error);
+        }
+    });
+
+    // Update charts periodically
+    setInterval(function() {
+        $.ajax({
+            url: '{% url "supplychain:weaver_performance" %}',
+            data: { days: 30 },
+            success: function(data) {
+                if (window.performanceChart) {
+                    window.performanceChart.data = data;
+                    window.performanceChart.update();
+                }
+                if (window.efficiencyChart) {
+                    window.efficiencyChart.data.labels = data.weavers;
+                    window.efficiencyChart.data.datasets[0].data = data.efficiency;
+                    window.efficiencyChart.update();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error updating weaver performance data:', error);
+            }
+        });
+    }, 300000); // Update every 5 minutes
+});
+</script>
+{% endblock %} 

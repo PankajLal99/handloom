@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="page-view-id" content="">
+    <title>{% block title %}Handloom Supply Chain{% endblock %}</title>
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        main {
+            flex: 1 0 auto;
+            padding-bottom: 2rem;
+        }
+        .footer {
+            flex-shrink: 0;
+            background-color: #f8f9fa;
+            padding: 1rem 0;
+            margin-top: auto;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'supplychain:dashboard' %}">Handloom Supply Chain</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'supplychain:dashboard' %}">Dashboard</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="managementDropdown" role="button" data-bs-toggle="dropdown">
+                            Management
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'supplychain:weaver_list' %}">Weavers</a></li>
+                            <li><a class="dropdown-item" href="{% url 'supplychain:loom_list' %}">Looms</a></li>
+                            <li><a class="dropdown-item" href="{% url 'supplychain:thread_batch_list' %}">Thread Batches</a></li>
+                            <li><a class="dropdown-item" href="{% url 'supplychain:production_list' %}">Production Logs</a></li>
+                            <li><a class="dropdown-item" href="{% url 'supplychain:loom_assignments' %}">Loom Assignments</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="analyticsDropdown" role="button" data-bs-toggle="dropdown">
+                            Analytics
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'supplychain:weaver_performance' %}">Weaver Performance</a></li>
+                            <li><a class="dropdown-item" href="{% url 'supplychain:thread_utilization' %}">Thread Utilization</a></li>
+                            <li><a class="dropdown-item" href="{% url 'supplychain:top_looms' %}">Top Productive Looms</a></li>
+                            <li><a class="dropdown-item" href="{% url 'supplychain:production_trends' %}">Production Trends</a></li>
+                            <li><a class="dropdown-item" href="{% url 'supplychain:inventory_status' %}">Inventory Status</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                {{ user.username }}
+                            </a>
+                            {% if user.groups.all.0.name == 'admin' %}
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'supplychain:tracking_analytics' %}">Tracking Analytics</a></li>
+                            {% endif %}
+                                <li>
+                                    <form method="post" action="{% url 'logout' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">Logout</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container my-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container text-center">
+            <span class="text-muted">© 2024 Handloom Supply Chain</span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5.3 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'tracking/js/tracking.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 
