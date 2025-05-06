@@ -81,13 +81,20 @@
                             {% if user.groups.all.0.name == 'admin' %}
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="{% url 'supplychain:tracking_analytics' %}">Tracking Analytics</a></li>
-                            {% endif %}
                                 <li>
                                     <form method="post" action="{% url 'logout' %}" class="d-inline">
                                         {% csrf_token %}
                                         <button type="submit" class="dropdown-item">Logout</button>
                                     </form>
                                 </li>
+                            {% else %}
+                                <li>
+                                    <form method="post" action="{% url 'logout' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">Logout</button>
+                                    </form>
+                                </li>
+                            {% endif %}
                             </ul>
                         </li>
                     {% else %}
